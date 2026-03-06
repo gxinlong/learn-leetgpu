@@ -1,0 +1,8 @@
+.vscode/
+*.so
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
