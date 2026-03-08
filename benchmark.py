@@ -269,7 +269,7 @@ def main():
     )
     parser.add_argument("cu_file", help="Path to .cu solution file")
     parser.add_argument("--warmup", type=int, default=10, help="Warmup iterations (default: 10)")
-    parser.add_argument("--repeat", type=int, default=100, help="Benchmark iterations (default: 100)")
+    parser.add_argument("--repeat", type=int, default=20, help="Benchmark iterations (default: 100)")
     parser.add_argument("--ptr-size", type=int, default=0,
                         help="Override element count for all pointer buffers")
     parser.add_argument("--arch", type=str, default="",
