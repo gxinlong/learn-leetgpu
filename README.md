@@ -7,7 +7,7 @@ benchmark.py easy/Matrix\ Multiplication/solution.cu --M=8192 --K=6144 --N=4096 
 ```
 
 - 自动编译 cu 文件
-- 自动捕获参数名后创建对应大小的 Tensor, M、K、N 等随 kernel extern 包装函数变化
+- 自动捕获参数名后创建对应大小的 Tensor, M、K、N 等随 kernel extern 包装函数变化, 多个参数时会尽量构造最大的二维矩阵
 - 不测试正确性, 只测试调用性能
 
 比如上面的命令对应下面的签名：
