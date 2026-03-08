@@ -10,6 +10,8 @@ benchmark.py easy/Matrix\ Multiplication/solution.cu --M=8192 --K=6144 --N=4096 
 - 自动捕获参数名后创建对应大小的 Tensor, M、K、N 等随 kernel extern 包装函数变化
 - 不测试正确性, 只测试调用性能
 
+比如上面的命令对应下面的签名：
+
 ```
 // A, B, C are device pointers (i.e. pointers to memory on the GPU)
 extern "C" void solve(const float* A, const float* B, float* C, int M, int K, int N) {
