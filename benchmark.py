@@ -33,19 +33,36 @@ import argparse
 import torch
 
 SUPPORTED_TYPES = {
-    "float*":  ("float*",  ctypes.c_void_p),
-    "double*": ("double*", ctypes.c_void_p),
-    "int*":    ("int*",    ctypes.c_void_p),
-    "int":     ("int",     ctypes.c_int),
-    "long":    ("long",    ctypes.c_long),
-    "size_t":  ("size_t",  ctypes.c_size_t),
-    "unsigned int": ("unsigned int", ctypes.c_uint),
+    "float*":          ("float*",          ctypes.c_void_p),
+    "double*":         ("double*",         ctypes.c_void_p),
+    "unsigned char*":  ("unsigned char*",  ctypes.c_void_p),
+    "unsigned short*": ("unsigned short*", ctypes.c_void_p),
+    "unsigned int*":   ("unsigned int*",   ctypes.c_void_p),
+    "char*":           ("char*",           ctypes.c_void_p),
+    "short*":          ("short*",          ctypes.c_void_p),
+    "long*":           ("long*",           ctypes.c_void_p),
+    "int*":            ("int*",            ctypes.c_void_p),
+    "int":             ("int",             ctypes.c_int),
+    "long":            ("long",            ctypes.c_long),
+    "size_t":          ("size_t",          ctypes.c_size_t),
+    "unsigned int":    ("unsigned int",    ctypes.c_uint),
+    "unsigned short":  ("unsigned short",  ctypes.c_ushort),
+    "unsigned char":   ("unsigned char",   ctypes.c_ubyte),
+    "char":            ("char",            ctypes.c_char),
+    "short":           ("short",           ctypes.c_short),
 }
 
 DTYPE_MAP = {
-    "float*":  torch.float32,
-    "double*": torch.float64,
-    "int*":    torch.int32,
+    "float*":          torch.float32,
+    "double*":         torch.float64,
+    "int*":            torch.int32,
+    "long*":           torch.int64,
+    "short*":          torch.int16,
+    "char*":           torch.int8,
+    "unsigned char*":  torch.uint8,
+    # torch.uint16 / torch.uint32 may not exist in older PyTorch; fall back to signed
+    "unsigned short*": getattr(torch, "uint16", torch.int16),
+    "unsigned int*":   getattr(torch, "uint32", torch.int32),
 }
 
 
@@ -186,7 +203,10 @@ def run_benchmark(cu_file, dim_values, warmup, repeat, ptr_size_override, arch):
     for ptype, pname, is_const in params:
         if ptype in DTYPE_MAP:
             dtype = DTYPE_MAP[ptype]
-            t = torch.randn(ptr_elems, device="cuda", dtype=torch.float32).to(dtype)
+            if dtype.is_floating_point:
+                t = torch.randn(ptr_elems, device="cuda", dtype=dtype)
+            else:
+                t = torch.zeros(ptr_elems, device="cuda", dtype=dtype).random_()
             role = "input" if is_const else "output"
             tensor_info.append((pname, ptype, role, t))
             call_args.append(ctypes.c_void_p(t.data_ptr()))
@@ -212,16 +232,20 @@ def run_benchmark(cu_file, dim_values, warmup, repeat, ptr_size_override, arch):
         tag = "IN " if role == "input" else "OUT"
         print(f"  {tag} {name:>6s} = {_fmt_vals(vals)}")
 
-    print(f"\n[warmup] {warmup} iterations ...")
-    for _ in range(warmup):
-        lib.solve(*call_args)
+    # 单独调用一次用于验证输出正确性，再进行 warmup
+    lib.solve(*call_args)
     torch.cuda.synchronize()
 
-    print(f"\n[preview] first {PREVIEW} elements after kernel call:")
+    print(f"\n[preview] first {PREVIEW} elements after 1 kernel call:")
     for name, ptype, role, t in tensor_info:
         vals = t[:PREVIEW].cpu().tolist()
         tag = "IN " if role == "input" else "OUT"
         print(f"  {tag} {name:>6s} = {_fmt_vals(vals)}")
+
+    print(f"\n[warmup] {warmup} iterations ...")
+    for _ in range(warmup):
+        lib.solve(*call_args)
+    torch.cuda.synchronize()
 
     print(f"\n[bench]  {repeat} iterations ...")
     start_event = torch.cuda.Event(enable_timing=True)
@@ -294,4 +318,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
