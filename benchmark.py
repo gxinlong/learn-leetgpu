@@ -147,7 +147,12 @@ def compile_cu(cu_file: str, output_so: str, arch: str):
         clean_file,
     ]
     print(f"[compile] {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
     if clean_file != cu_file and os.path.exists(clean_file):
         os.remove(clean_file)
     if result.returncode != 0:

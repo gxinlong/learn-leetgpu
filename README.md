@@ -28,10 +28,11 @@ extern "C" void solve(const float* A, const float* B, float* C, int M, int K, in
 ncu 命令：
 
 ```
-ncu --target-processes all \                                                                                              
+ncu --target-processes all \
         --profile-from-start on \
         --launch-skip 20 \
         --launch-count 2 \
+        --set full \
         -o profile_log -f \
         $(which python) benchmark.py easy/Matrix\ Multiplication/solution_register_prefetch.cu --M=8192 --K=6144 --N=4096 --repeat=20
 ```

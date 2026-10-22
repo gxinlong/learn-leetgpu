@@ -12,7 +12,7 @@ __global__ void reduce_kernel(const float* input, float* output, int N) {
   // 预取数据
   s_input[tx] = (tid < N) ? input[tid] : 0.0f;
   __syncthreads();
-  
+
   // 计算
   for (int ceil = BLOCK_SIZE_N / 2; ceil > 0; ceil >>= 1) {
     if (tx < ceil) {
